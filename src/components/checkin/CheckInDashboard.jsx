@@ -1,0 +1,187 @@
+import React, { useState, useEffect, useRef } from 'react';
+import Scanner from './Scanner';
+import CheckInCounters from './CheckInCounters';
+import ActionLog from './ActionLog';
+import { ApiUtils } from '../../services/api';
+import { StorageUtils } from '../../services/storage';
+
+const CheckInDashboard = ({
+    attendees,
+    setAttendees, // local update
+    addLog,
+    logs,
+    onSync,
+    config
+}) => {
+    const [isScanning, setIsScanning] = useState(false);
+    const [scanResult, setScanResult] = useState(null); // { status: 'success'|'error'|'warn', message, name }
+    const [manualId, setManualId] = useState('');
+    const [processing, setProcessing] = useState(false);
+    const [lastCheckInId, setLastCheckInId] = useState(null);
+
+    // Maps for fast lookup
+    const attendeesMap = useRef(new Map());
+    useEffect(() => {
+        attendeesMap.current = new Map(attendees.map(a => [a.id, a]));
+    }, [attendees]);
+
+    const handleScan = async (decodedText) => {
+        if (processing || scanResult) return; // Lock
+        setProcessing(true);
+
+        try {
+            // 1. Parse
+            // Expected: EVENT_CODE:ID
+            const parts = decodedText.split(':');
+            if (parts.length < 2) {
+                throw new Error("Invalid Format");
+            }
+            const code = parts[0];
+            const id = parts[1];
+
+            // 2. Event Code Check
+            if (config.eventCode && code !== config.eventCode) {
+                showResult('error', 'Wrong Event Code', `Code: ${code}`);
+                return;
+            }
+
+            // 3. Local Lookup
+            const attendee = attendeesMap.current.get(id);
+            if (!attendee) {
+                showResult('error', 'Not Found', `ID: ${id}`);
+                // Log it anyway?
+                addLog({ ts: new Date().toISOString(), id, result: 'error', message: 'Not found' });
+                return;
+            }
+
+            if (attendee.status === 'inactive') {
+                showResult('error', 'Inactive', attendee.name);
+                addLog({ ts: new Date().toISOString(), name: attendee.name, result: 'error', message: 'Inactive' });
+                return;
+            }
+
+            // 4. Check already checked in
+            if (attendee.status === 'checked_in') {
+                showResult('warn', 'Already Checked-in', attendee.name);
+                // setLastCheckInId(id); // Allow undo? Maybe.
+                addLog({ ts: new Date().toISOString(), name: attendee.name, result: 'warn', message: 'Already checked in' });
+                return;
+            }
+
+            // 5. Success Flow
+            // Optimistic Update
+            const updatedList = attendees.map(a => a.id === id ? { ...a, status: 'checked_in', checked_in_at: new Date().toISOString() } : a);
+            setAttendees(updatedList);
+            StorageUtils.saveAttendees(updatedList);
+
+            showResult('success', 'Checked In!', attendee.name);
+            setLastCheckInId(id);
+            addLog({ ts: new Date().toISOString(), name: attendee.name, result: 'success', message: 'Check-in confirmed' });
+
+            // Async API Call
+            ApiUtils.checkIn(id, config).then(res => {
+                if (!res.ok) console.warn("Background check-in sync failed", res);
+            });
+
+        } catch (err) {
+            showResult('error', 'Error', err.message);
+        } finally {
+            // setProcessing(false) happens after timeout in showResult
+        }
+    };
+
+    const showResult = (status, title, message) => {
+        setScanResult({ status, title, message });
+
+        // Play sound?
+        // auto clear
+        setTimeout(() => {
+            setScanResult(null);
+            setProcessing(false);
+        }, 1500);
+    };
+
+    const handleManualCheckIn = () => {
+        if (!manualId) return;
+        handleScan(`${config.eventCode || 'EVENT'}:${manualId}`); // Simulate scan format or just ID check
+        setManualId('');
+    };
+
+    const handleUndo = async () => {
+        if (!lastCheckInId) return;
+        const id = lastCheckInId;
+
+        if (!window.confirm("Undo last check-in?")) return;
+
+        // Local Undo
+        const updatedList = attendees.map(a => a.id === id ? { ...a, status: 'not_yet', checked_in_at: null } : a);
+        setAttendees(updatedList);
+        StorageUtils.saveAttendees(updatedList);
+
+        addLog({ ts: new Date().toISOString(), id, result: 'undo', message: 'Undo requested' });
+        setLastCheckInId(null);
+
+        await ApiUtils.undoCheckIn(id, config);
+    };
+
+    return (
+        <div className="container animate-spawn" style={{ paddingTop: '80px', display: 'flex', flexDirection: 'column', height: 'calc(100vh - 80px)' }}>
+            {/* Counters */}
+            <CheckInCounters attendees={attendees} />
+
+            {/* Main Actions */}
+            <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <button
+                    className="btn btn-primary"
+                    style={{ padding: '24px', fontSize: '1.2rem', borderRadius: '16px', boxShadow: '0 4px 20px rgba(99, 102, 241, 0.4)' }}
+                    onClick={() => setIsScanning(true)}
+                >
+                    📷 Scan QR Code
+                </button>
+
+                <div style={{ display: 'flex', gap: '8px' }}>
+                    <input
+                        placeholder="Manual ID / Search"
+                        value={manualId}
+                        onChange={e => setManualId(e.target.value)}
+                    />
+                    <button className="btn" onClick={handleManualCheckIn}>Ex</button>
+                </div>
+
+                {lastCheckInId && (
+                    <button className="btn" style={{ background: 'rgba(239, 68, 68, 0.2)', color: 'var(--color-danger)' }} onClick={handleUndo}>
+                        Undo Last Check-in
+                    </button>
+                )}
+            </div>
+
+            {/* Log */}
+            <ActionLog logs={logs} />
+
+            {/* Scanner & Result Layers */}
+            <Scanner
+                isScanning={isScanning}
+                onScan={handleScan}
+                onStop={() => setIsScanning(false)}
+            />
+
+            {scanResult && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 60,
+                    background: scanResult.status === 'success' ? 'rgba(16, 185, 129, 0.9)' : (scanResult.status === 'warn' ? 'rgba(245, 158, 11, 0.9)' : 'rgba(239, 68, 68, 0.9)'),
+                    backdropFilter: 'blur(8px)',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                    color: 'white', animation: 'fadeIn 0.2s'
+                }}>
+                    <div style={{ fontSize: '4rem' }}>
+                        {scanResult.status === 'success' ? '✓' : (scanResult.status === 'warn' ? '!' : '✕')}
+                    </div>
+                    <h1 style={{ fontSize: '2.5rem', margin: '16px 0', textAlign: 'center' }}>{scanResult.title}</h1>
+                    <p style={{ fontSize: '1.5rem' }}>{scanResult.message}</p>
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default CheckInDashboard;
