@@ -13,73 +13,130 @@ const Scanner = ({ onScan, isScanning, onStop }) => {
     useEffect(() => {
         let html5QrCode;
 
-        const startScanner = async () => {
-            try {
-                html5QrCode = new Html5Qrcode("reader");
-                scannerRef.current = html5QrCode;
+        useEffect(() => {
+            let html5QrCode;
 
-                await html5QrCode.start(
-                    { facingMode: "environment" },
-                    {
+            const startScanner = async () => {
+                try {
+                    // Ensure previous instance is gone
+                    if (scannerRef.current) {
+                        await scannerRef.current.stop().catch(() => { });
+                        scannerRef.current.clear().catch(() => { });
+                        scannerRef.current = null;
+                    }
+
+                    html5QrCode = new Html5Qrcode("reader");
+                    scannerRef.current = html5QrCode;
+
+                    const config = {
                         fps: 10,
                         qrbox: { width: 250, height: 250 },
-                        formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE]
-                    },
-                    (decodedText) => {
-                        if (onScanRef.current) {
-                            onScanRef.current(decodedText);
+                        aspectRatio: window.innerWidth / window.innerHeight
+                    };
+
+                    await html5QrCode.start(
+                        { facingMode: "environment" },
+                        config,
+                        (decodedText) => {
+                            // Pause immediately to prevent multiple scans and freeze frame
+                            if (html5QrCode) {
+                                html5QrCode.pause(true);
+                            }
+
+                            // Vibration feedback
+                            if (navigator.vibrate) navigator.vibrate(200);
+
+                            if (onScanRef.current) {
+                                onScanRef.current(decodedText);
+                            }
+                        },
+                        (errorMessage) => {
+                            // ignore scan errors
                         }
-                    },
-                    (errorMessage) => {
-                        // ignore scan errors
-                    }
-                );
-            } catch (err) {
-                console.error("Camera error", err);
-                setError("Camera permission denied or not available.");
+                    );
+                } catch (err) {
+                    console.error("Camera error", err);
+                    setError("カメラを起動できませんでした。権限を確認してください。");
+                }
+            };
+
+            if (isScanning) {
+                // slightly longer delay to ensure DOM readiness
+                setTimeout(() => startScanner(), 300);
             }
-        };
 
-        if (isScanning) {
-            // slight delay to ensure cleanup of previous
-            setTimeout(() => startScanner(), 100);
-        }
+            return () => {
+                if (scannerRef.current) {
+                    // We use stop() which returns a promise, but in cleanup we can't await easily.
+                    // clear() is usually enough to remove UI.
+                    scannerRef.current.stop().then(() => {
+                        scannerRef.current.clear();
+                    }).catch(err => {
+                        console.warn('Stop failed', err);
+                        // Force clear if stop fails
+                        try { scannerRef.current.clear(); } catch (e) { }
+                    });
+                    scannerRef.current = null;
+                }
+            };
+        }, [isScanning]);
 
-        return () => {
-            if (scannerRef.current) {
-                scannerRef.current.stop().catch(err => console.log('Stop failed', err));
-                scannerRef.current.clear();
-                scannerRef.current = null;
-            }
-        };
-    }, [isScanning]); // Removed onScan from deps
+        if (!isScanning) return null;
 
-    if (!isScanning) return null;
+        return (
+            <div style={{ position: 'fixed', inset: 0, zIndex: 50, background: '#000', display: 'flex', flexDirection: 'column' }}>
+                {/* Full screen video container */}
+                <div id="reader" style={{ width: '100%', height: '100%', flex: 1, overflow: 'hidden' }}></div>
 
-    return (
-        <div className="fixed inset-0 z-40 bg-black flex flex-col items-center justify-center">
-            <div id="reader" style={{ width: '100%', maxWidth: '500px', height: '100vh', background: 'black' }}></div>
+                {/* Custom CSS to force video cover - inserted globally or here */}
+                <style>{`
+                #reader video {
+                    object-fit: cover !important;
+                    width: 100% !important;
+                    height: 100% !important;
+                }
+            `}</style>
 
-            {error && (
-                <div className="absolute top-20 left-0 right-0 text-center text-red-500 bg-white p-2">
-                    {error}
+                <div style={{
+                    position: 'absolute', inset: 0, pointerEvents: 'none',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }}>
+                    {/* Guide Frame */}
+                    <div style={{
+                        width: '260px', height: '260px',
+                        border: '2px solid rgba(255, 255, 255, 0.8)',
+                        borderRadius: '24px',
+                        boxShadow: '0 0 0 4000px rgba(0, 0, 0, 0.5)',
+                        position: 'relative'
+                    }}>
+                        <div style={{ position: 'absolute', top: '-2px', left: '-2px', width: '40px', height: '40px', borderTop: '4px solid var(--color-primary)', borderLeft: '4px solid var(--color-primary)', borderTopLeftRadius: '24px' }}></div>
+                        <div style={{ position: 'absolute', top: '-2px', right: '-2px', width: '40px', height: '40px', borderTop: '4px solid var(--color-primary)', borderRight: '4px solid var(--color-primary)', borderTopRightRadius: '24px' }}></div>
+                        <div style={{ position: 'absolute', bottom: '-2px', left: '-2px', width: '40px', height: '40px', borderBottom: '4px solid var(--color-primary)', borderLeft: '4px solid var(--color-primary)', borderBottomLeftRadius: '24px' }}></div>
+                        <div style={{ position: 'absolute', bottom: '-2px', right: '-2px', width: '40px', height: '40px', borderBottom: '4px solid var(--color-primary)', borderRight: '4px solid var(--color-primary)', borderBottomRightRadius: '24px' }}></div>
+                    </div>
                 </div>
-            )}
 
-            <button
-                onClick={onStop}
-                className="absolute bottom-10 left-1/2 transform -translate-x-1/2 p-4 rounded-full bg-red-600 text-white font-bold shadow-lg z-50"
-                style={{ width: '60px', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            >
-                ✕
-            </button>
+                {error && (
+                    <div style={{ position: 'absolute', top: '10%', left: 0, right: 0, padding: '16px', color: '#ef4444', textAlign: 'center', background: 'rgba(255,255,255,0.9)' }}>
+                        {error}
+                    </div>
+                )}
 
-            {/* Overlay Guide */}
-            <div className="absolute top-0 left-0 right-0 bottom-0 pointer-events-none border-2 border-white/30" style={{ zIndex: 45 }}>
-                <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '250px', height: '250px', border: '2px solid var(--color-primary)', borderRadius: '12px', boxShadow: '0 0 0 4000px rgba(0,0,0,0.5)' }}></div>
+                <button
+                    onClick={onStop}
+                    style={{
+                        position: 'absolute', bottom: '40px', left: '50%', transform: 'translateX(-50%)',
+                        width: '64px', height: '64px', borderRadius: '50%',
+                        background: 'rgba(255, 255, 255, 0.2)', backdropFilter: 'blur(10px)',
+                        border: '2px solid rgba(255,255,255,0.5)',
+                        color: 'white', fontSize: '24px', cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 60
+                    }}
+                >
+                    ✕
+                </button>
             </div>
-        </div>
-    );
-};
+        );
+    };
 
-export default Scanner;
+    export default Scanner;
