@@ -27,7 +27,7 @@ const Scanner = ({ onScan, isScanning, onStop }) => {
 
                 const config = {
                     fps: 10,
-                    // qrbox removed to scan entire video frame (prevents misalignment with object-fit: cover)
+                    qrbox: { width: 250, height: 250 },
                     formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE]
                 };
 
@@ -80,14 +80,7 @@ const Scanner = ({ onScan, isScanning, onStop }) => {
             {/* Full screen video container */}
             <div id="reader" style={{ width: '100%', height: '100%', flex: 1, overflow: 'hidden' }}></div>
 
-            {/* Custom CSS to force video cover */}
-            <style>{`
-            #reader video {
-                object-fit: cover !important;
-                width: 100% !important;
-                height: 100% !important;
-            }
-            `}</style>
+            {/* Standard video placement */}
 
             <div style={{
                 position: 'absolute', inset: 0, pointerEvents: 'none',
