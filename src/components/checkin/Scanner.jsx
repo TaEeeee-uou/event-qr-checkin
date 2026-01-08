@@ -22,7 +22,11 @@ const Scanner = ({ onScan, isScanning, onStop }) => {
                     scannerRef.current = null;
                 }
 
-                html5QrCode = new Html5Qrcode("reader");
+                html5QrCode = new Html5Qrcode("reader", {
+                    experimentalFeatures: {
+                        useBarCodeDetectorIfSupported: true
+                    }
+                });
                 scannerRef.current = html5QrCode;
 
                 const config = {
