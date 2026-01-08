@@ -27,7 +27,7 @@ const Scanner = ({ onScan, isScanning, onStop }) => {
 
                 const config = {
                     fps: 10,
-                    qrbox: { width: 250, height: 250 },
+                    // qrbox removed to scan full frame
                     formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE]
                 };
 
@@ -82,24 +82,7 @@ const Scanner = ({ onScan, isScanning, onStop }) => {
 
             {/* Standard video placement */}
 
-            <div style={{
-                position: 'absolute', inset: 0, pointerEvents: 'none',
-                display: 'flex', alignItems: 'center', justifyContent: 'center'
-            }}>
-                {/* Guide Frame */}
-                <div style={{
-                    width: '260px', height: '260px',
-                    border: '2px solid rgba(255, 255, 255, 0.8)',
-                    borderRadius: '24px',
-                    boxShadow: '0 0 0 4000px rgba(0, 0, 0, 0.5)',
-                    position: 'relative'
-                }}>
-                    <div style={{ position: 'absolute', top: '-2px', left: '-2px', width: '40px', height: '40px', borderTop: '4px solid var(--color-primary)', borderLeft: '4px solid var(--color-primary)', borderTopLeftRadius: '24px' }}></div>
-                    <div style={{ position: 'absolute', top: '-2px', right: '-2px', width: '40px', height: '40px', borderTop: '4px solid var(--color-primary)', borderRight: '4px solid var(--color-primary)', borderTopRightRadius: '24px' }}></div>
-                    <div style={{ position: 'absolute', bottom: '-2px', left: '-2px', width: '40px', height: '40px', borderBottom: '4px solid var(--color-primary)', borderLeft: '4px solid var(--color-primary)', borderBottomLeftRadius: '24px' }}></div>
-                    <div style={{ position: 'absolute', bottom: '-2px', right: '-2px', width: '40px', height: '40px', borderBottom: '4px solid var(--color-primary)', borderRight: '4px solid var(--color-primary)', borderBottomRightRadius: '24px' }}></div>
-                </div>
-            </div>
+
 
             {error && (
                 <div style={{ position: 'absolute', top: '10%', left: 0, right: 0, padding: '16px', color: '#ef4444', textAlign: 'center', background: 'rgba(255,255,255,0.9)' }}>
