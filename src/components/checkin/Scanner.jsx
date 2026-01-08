@@ -27,7 +27,7 @@ const Scanner = ({ onScan, isScanning, onStop }) => {
 
                 const config = {
                     fps: 10,
-                    qrbox: { width: 250, height: 250 },
+                    // qrbox removed to scan entire video frame (prevents misalignment with object-fit: cover)
                     formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE]
                 };
 
