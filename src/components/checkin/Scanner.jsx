@@ -35,10 +35,8 @@ const Scanner = ({ onScan, isScanning, onStop }) => {
                     { facingMode: "environment" },
                     config,
                     (decodedText) => {
-                        // Pause immediately to prevent multiple scans and freeze frame
-                        if (html5QrCode) {
-                            html5QrCode.pause(true);
-                        }
+                        // Pause removed to prevent getting stuck (requires resume logic)
+                        // The overlay provides enough feedback and the parent 'processing' flag prevents double-reads.
 
                         // Vibration feedback
                         if (navigator.vibrate) navigator.vibrate(200);
