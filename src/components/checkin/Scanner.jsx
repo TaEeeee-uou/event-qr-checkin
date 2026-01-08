@@ -22,17 +22,12 @@ const Scanner = ({ onScan, isScanning, onStop }) => {
                     scannerRef.current = null;
                 }
 
-                html5QrCode = new Html5Qrcode("reader", {
-                    experimentalFeatures: {
-                        useBarCodeDetectorIfSupported: true
-                    }
-                });
+                html5QrCode = new Html5Qrcode("reader");
                 scannerRef.current = html5QrCode;
 
                 const config = {
                     fps: 10,
                     qrbox: { width: 250, height: 250 },
-                    aspectRatio: window.innerWidth / window.innerHeight,
                     formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE]
                 };
 
