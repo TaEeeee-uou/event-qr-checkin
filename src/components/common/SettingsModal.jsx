@@ -18,19 +18,19 @@ const SettingsModal = ({ isOpen, onClose, config, onSave }) => {
     };
 
     const handleTest = async () => {
-        setStatus({ type: 'info', msg: 'Testing...' });
+        setStatus({ type: 'info', msg: 'テスト中...' });
         try {
             const res = await ApiUtils.ping(formData);
             if (res.ok) {
-                setStatus({ type: 'success', msg: 'Connected! ' + (res.event_code ? `Event: ${res.event_code}` : '') });
+                setStatus({ type: 'success', msg: '接続成功! ' + (res.event_code ? `イベント: ${res.event_code}` : '') });
                 if (res.event_code) {
                     setFormData(prev => ({ ...prev, eventCode: res.event_code }));
                 }
             } else {
-                setStatus({ type: 'error', msg: 'Failed: ' + (res.error || 'Unknown') });
+                setStatus({ type: 'error', msg: '失敗: ' + (res.error || '不明なエラー') });
             }
         } catch (err) {
-            setStatus({ type: 'error', msg: 'Error: ' + err.message });
+            setStatus({ type: 'error', msg: 'エラー: ' + err.message });
         }
     };
 
@@ -40,10 +40,10 @@ const SettingsModal = ({ isOpen, onClose, config, onSave }) => {
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="App Settings">
+        <Modal isOpen={isOpen} onClose={onClose} title="アプリ設定">
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <div>
-                    <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem' }}>GAS Web App URL</label>
+                    <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem' }}>GAS Webアプリ URL</label>
                     <input
                         value={formData.webappUrl}
                         onChange={e => handleChange('webappUrl', e.target.value)}
@@ -51,16 +51,16 @@ const SettingsModal = ({ isOpen, onClose, config, onSave }) => {
                     />
                 </div>
                 <div>
-                    <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem' }}>API Token</label>
+                    <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem' }}>APIトークン</label>
                     <input
                         type="password"
                         value={formData.apiToken}
                         onChange={e => handleChange('apiToken', e.target.value)}
-                        placeholder="Secret Token"
+                        placeholder="秘密のトークン"
                     />
                 </div>
                 <div>
-                    <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem' }}>Event Code (Optional)</label>
+                    <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem' }}>イベントコード (任意)</label>
                     <input
                         value={formData.eventCode}
                         onChange={e => handleChange('eventCode', e.target.value)}
@@ -79,8 +79,8 @@ const SettingsModal = ({ isOpen, onClose, config, onSave }) => {
                 )}
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px' }}>
-                    <button className="btn" onClick={handleTest}>Test Connection</button>
-                    <button className="btn btn-success" onClick={handleSave}>Save Settings</button>
+                    <button className="btn" onClick={handleTest}>接続テスト</button>
+                    <button className="btn btn-success" onClick={handleSave}>保存する</button>
                 </div>
             </div>
         </Modal>

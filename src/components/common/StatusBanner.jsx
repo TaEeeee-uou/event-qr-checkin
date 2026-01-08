@@ -21,9 +21,9 @@ const StatusBanner = ({ lastSyncedAt, isSyncing, onSync, error }) => {
                     background: error ? 'var(--color-danger)' : (isSyncing ? 'var(--color-warning)' : 'var(--color-success)')
                 }}></span>
                 <span>
-                    {isSyncing ? 'Syncing...' : (
-                        error ? `Error: ${error}` : (
-                            lastSyncedAt ? `Synced: ${new Date(lastSyncedAt).toLocaleTimeString()}` : 'Not synced'
+                    {isSyncing ? '同期中...' : (
+                        error ? `エラー: ${error}` : (
+                            lastSyncedAt ? `最終同期: ${new Date(lastSyncedAt).toLocaleTimeString()}` : '未同期'
                         )
                     )}
                 </span>
@@ -42,7 +42,7 @@ const StatusBanner = ({ lastSyncedAt, isSyncing, onSync, error }) => {
                     fontSize: '0.75rem'
                 }}
             >
-                🔄 Sync
+                🔄 同期
             </button>
         </div>
     );

@@ -62,7 +62,7 @@ const CsvImporter = ({ onImport, isImporting }) => {
 
     return (
         <div className="glass-panel" style={{ padding: '16px' }}>
-            <h3 style={{ margin: '0 0 12px 0', fontSize: '1rem' }}>Import Attendees</h3>
+            <h3 style={{ margin: '0 0 12px 0', fontSize: '1rem' }}>参加者インポート (CSV)</h3>
 
             <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
                 <input type="file" accept=".csv,.txt" onChange={handleFileUpload} style={{ fontSize: '0.9rem' }} />
@@ -71,7 +71,7 @@ const CsvImporter = ({ onImport, isImporting }) => {
             <textarea
                 className="glass-panel"
                 style={{ width: '100%', height: '100px', background: 'transparent', resize: 'vertical' }}
-                placeholder="Paste CSV here (Name, Email, Note)"
+                placeholder="CSVを貼り付け (氏名, Email, 備考)"
                 value={text}
                 onChange={handleTextChange}
             />
@@ -79,7 +79,7 @@ const CsvImporter = ({ onImport, isImporting }) => {
             {preview.length > 0 && (
                 <div style={{ marginTop: '8px' }}>
                     <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', marginBottom: '8px' }}>
-                        Preview: {preview.length} rows detected
+                        プレビュー: {preview.length} 件
                     </div>
                     <div style={{ maxHeight: '100px', overflowY: 'auto', fontSize: '0.75rem', background: 'rgba(0,0,0,0.2)', padding: '4px' }}>
                         {preview.slice(0, 5).map((r, i) => (
@@ -96,7 +96,7 @@ const CsvImporter = ({ onImport, isImporting }) => {
                     disabled={preview.length === 0 || isImporting}
                     onClick={executeImport}
                 >
-                    {isImporting ? 'Importing...' : 'Sync to Database'}
+                    {isImporting ? 'インポート中...' : 'データベースに反映'}
                 </button>
             </div>
         </div>

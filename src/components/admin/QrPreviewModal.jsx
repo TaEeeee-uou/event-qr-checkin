@@ -39,7 +39,7 @@ const QrPreviewModal = ({ isOpen, onClose, attendee, eventCode }) => {
 
         ctx.font = '40px Inter, sans-serif';
         ctx.fillStyle = '#64748b';
-        ctx.fillText('Please present this screen at reception', W / 2, 280);
+        ctx.fillText('受付でこの画面を提示してください', W / 2, 280);
 
         // QR Code
         const qrData = `${eventCode || ''}:${attendee.id}`;
@@ -107,7 +107,7 @@ const QrPreviewModal = ({ isOpen, onClose, attendee, eventCode }) => {
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="QR Ticket">
+        <Modal isOpen={isOpen} onClose={onClose} title="チケット生成">
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
                 <canvas ref={canvasRef} style={{ display: 'none' }} />
 
@@ -119,11 +119,11 @@ const QrPreviewModal = ({ isOpen, onClose, attendee, eventCode }) => {
                             style={{ width: '100%', maxWidth: '300px', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}
                         />
                         <button className="btn btn-primary" onClick={download}>
-                            Download PNG
+                            画像をダウンロード (PNG)
                         </button>
                     </>
                 ) : (
-                    <div>Generating...</div>
+                    <div>生成中...</div>
                 )}
             </div>
         </Modal>

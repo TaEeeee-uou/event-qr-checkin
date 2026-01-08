@@ -21,12 +21,12 @@ const AdminDashboard = ({
             const res = await ApiUtils.upsertAttendees(rows, config);
             if (res.ok) {
                 onSync(); // Refresh full list
-                alert(`Imported! Inserted: ${res.inserted}, Updated: ${res.updated}`);
+                alert(`インポート完了! 追加: ${res.inserted}, 更新: ${res.updated}`);
             } else {
-                alert("Import failed: " + res.error);
+                alert("インポート失敗: " + res.error);
             }
         } catch (e) {
-            alert("Error: " + e.message);
+            alert("エラー: " + e.message);
         } finally {
             setIsImporting(false);
         }
@@ -34,7 +34,7 @@ const AdminDashboard = ({
 
     return (
         <div className="container animate-spawn" style={{ paddingTop: '80px' }}>
-            <h2 style={{ fontSize: '1.5rem', marginBottom: '16px' }}>Administration</h2>
+            <h2 style={{ fontSize: '1.5rem', marginBottom: '16px' }}>管理画面</h2>
 
             <CsvImporter onImport={handleImport} isImporting={isImporting} />
 

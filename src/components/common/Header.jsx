@@ -39,7 +39,7 @@ const Header = ({ currentMode, setMode, onOpenSettings }) => {
                         fontWeight: 500
                     }}
                 >
-                    Admin
+                    管理
                 </button>
                 <button
                     onClick={() => setMode('checkin')}
@@ -54,7 +54,7 @@ const Header = ({ currentMode, setMode, onOpenSettings }) => {
                         fontWeight: 500
                     }}
                 >
-                    Check-in
+                    受付
                 </button>
             </nav>
 

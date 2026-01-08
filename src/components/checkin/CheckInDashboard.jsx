@@ -34,37 +34,37 @@ const CheckInDashboard = ({
             // Expected: EVENT_CODE:ID
             const parts = decodedText.split(':');
             if (parts.length < 2) {
-                throw new Error("Invalid Format");
+                throw new Error("フォーマット不正");
             }
             const code = parts[0];
             const id = parts[1];
 
             // 2. Event Code Check
             if (config.eventCode && code !== config.eventCode) {
-                showResult('error', 'Wrong Event Code', `Code: ${code}`);
+                showResult('error', 'イベントコード不一致', `Code: ${code}`);
                 return;
             }
 
             // 3. Local Lookup
             const attendee = attendeesMap.current.get(id);
             if (!attendee) {
-                showResult('error', 'Not Found', `ID: ${id}`);
+                showResult('error', '該当者なし', `ID: ${id}`);
                 // Log it anyway?
-                addLog({ ts: new Date().toISOString(), id, result: 'error', message: 'Not found' });
+                addLog({ ts: new Date().toISOString(), id, result: 'error', message: '名簿にありません' });
                 return;
             }
 
             if (attendee.status === 'inactive') {
-                showResult('error', 'Inactive', attendee.name);
-                addLog({ ts: new Date().toISOString(), name: attendee.name, result: 'error', message: 'Inactive' });
+                showResult('error', '無効な参加者', attendee.name);
+                addLog({ ts: new Date().toISOString(), name: attendee.name, result: 'error', message: '無効ステータス' });
                 return;
             }
 
             // 4. Check already checked in
             if (attendee.status === 'checked_in') {
-                showResult('warn', 'Already Checked-in', attendee.name);
+                showResult('warn', '受付済みです', attendee.name);
                 // setLastCheckInId(id); // Allow undo? Maybe.
-                addLog({ ts: new Date().toISOString(), name: attendee.name, result: 'warn', message: 'Already checked in' });
+                addLog({ ts: new Date().toISOString(), name: attendee.name, result: 'warn', message: '既に受付済' });
                 return;
             }
 
@@ -74,9 +74,9 @@ const CheckInDashboard = ({
             setAttendees(updatedList);
             StorageUtils.saveAttendees(updatedList);
 
-            showResult('success', 'Checked In!', attendee.name);
+            showResult('success', '受付完了!', attendee.name);
             setLastCheckInId(id);
-            addLog({ ts: new Date().toISOString(), name: attendee.name, result: 'success', message: 'Check-in confirmed' });
+            addLog({ ts: new Date().toISOString(), name: attendee.name, result: 'success', message: 'チェックイン完了' });
 
             // Async API Call
             ApiUtils.checkIn(id, config).then(res => {
@@ -84,7 +84,7 @@ const CheckInDashboard = ({
             });
 
         } catch (err) {
-            showResult('error', 'Error', err.message);
+            showResult('error', 'エラー', err.message);
         } finally {
             // setProcessing(false) happens after timeout in showResult
         }
@@ -111,14 +111,14 @@ const CheckInDashboard = ({
         if (!lastCheckInId) return;
         const id = lastCheckInId;
 
-        if (!window.confirm("Undo last check-in?")) return;
+        if (!window.confirm("直前のチェックインを取り消しますか？")) return;
 
         // Local Undo
         const updatedList = attendees.map(a => a.id === id ? { ...a, status: 'not_yet', checked_in_at: null } : a);
         setAttendees(updatedList);
         StorageUtils.saveAttendees(updatedList);
 
-        addLog({ ts: new Date().toISOString(), id, result: 'undo', message: 'Undo requested' });
+        addLog({ ts: new Date().toISOString(), id, result: 'undo', message: '取り消し実行' });
         setLastCheckInId(null);
 
         await ApiUtils.undoCheckIn(id, config);
@@ -136,21 +136,21 @@ const CheckInDashboard = ({
                     style={{ padding: '24px', fontSize: '1.2rem', borderRadius: '16px', boxShadow: '0 4px 20px rgba(99, 102, 241, 0.4)' }}
                     onClick={() => setIsScanning(true)}
                 >
-                    📷 Scan QR Code
+                    📷 QRコードをスキャン
                 </button>
 
                 <div style={{ display: 'flex', gap: '8px' }}>
                     <input
-                        placeholder="Manual ID / Search"
+                        placeholder="手動入力: ID検索"
                         value={manualId}
                         onChange={e => setManualId(e.target.value)}
                     />
-                    <button className="btn" onClick={handleManualCheckIn}>Ex</button>
+                    <button className="btn" onClick={handleManualCheckIn}>実行</button>
                 </div>
 
                 {lastCheckInId && (
                     <button className="btn" style={{ background: 'rgba(239, 68, 68, 0.2)', color: 'var(--color-danger)' }} onClick={handleUndo}>
-                        Undo Last Check-in
+                        直前のチェックインを取り消す (Undo)
                     </button>
                 )}
             </div>
