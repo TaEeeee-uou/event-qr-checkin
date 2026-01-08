@@ -5,6 +5,11 @@ const Scanner = ({ onScan, isScanning, onStop }) => {
     const scannerRef = useRef(null);
     const [error, setError] = useState(null);
 
+    const onScanRef = useRef(onScan);
+    useEffect(() => {
+        onScanRef.current = onScan;
+    }, [onScan]);
+
     useEffect(() => {
         let html5QrCode;
 
@@ -21,7 +26,9 @@ const Scanner = ({ onScan, isScanning, onStop }) => {
                         formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE]
                     },
                     (decodedText) => {
-                        onScan(decodedText);
+                        if (onScanRef.current) {
+                            onScanRef.current(decodedText);
+                        }
                     },
                     (errorMessage) => {
                         // ignore scan errors
@@ -45,7 +52,7 @@ const Scanner = ({ onScan, isScanning, onStop }) => {
                 scannerRef.current = null;
             }
         };
-    }, [isScanning, onScan]);
+    }, [isScanning]); // Removed onScan from deps
 
     if (!isScanning) return null;
 
