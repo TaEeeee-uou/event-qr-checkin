@@ -32,7 +32,8 @@ const Scanner = ({ onScan, isScanning, onStop }) => {
                 const config = {
                     fps: 10,
                     qrbox: { width: 250, height: 250 },
-                    aspectRatio: window.innerWidth / window.innerHeight
+                    aspectRatio: window.innerWidth / window.innerHeight,
+                    formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE]
                 };
 
                 await html5QrCode.start(
