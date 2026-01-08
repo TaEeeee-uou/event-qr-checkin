@@ -20,7 +20,8 @@ export const ApiUtils = {
             const response = await fetch(config.webappUrl, {
                 method: "POST",
                 // GAS often requires avoiding complex CORS preflights, but standard is:
-                headers: { "Content-Type": "application/json" },
+                // Use text/plain to avoid CORS preflight (OPTIONS) which GAS doesn't handle well
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
                 // Sometimes GAS redirects, so follow is important
                 redirect: "follow",
                 body: JSON.stringify(body)
