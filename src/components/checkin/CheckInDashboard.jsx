@@ -124,6 +124,26 @@ const CheckInDashboard = ({
         await ApiUtils.undoCheckIn(id, config);
     };
 
+    // Merge sync data into logs
+    const mergedLogs = useMemo(() => {
+        // 1. Generate success logs from current attendee state (Synced data)
+        const successLogs = attendees
+            .filter(a => a.status === 'checked_in' && a.checked_in_at)
+            .map(a => ({
+                ts: a.checked_in_at,
+                name: a.name,
+                result: 'success',
+                message: '受付済'
+            }));
+
+        // 2. Local logs (Errors, Warnings, Undos only)
+        // Filter out local success logs to avoid duplication with the state-based ones above
+        const otherLogs = logs.filter(l => l.result !== 'success' && l.result !== 'checked_in');
+
+        // 3. Combine and Sort by time desc
+        return [...successLogs, ...otherLogs].sort((a, b) => new Date(b.ts) - new Date(a.ts));
+    }, [attendees, logs]);
+
     return (
         <div className="container animate-spawn" style={{ paddingTop: '80px', display: 'flex', flexDirection: 'column', height: 'calc(100vh - 80px)' }}>
             {/* Counters */}
@@ -156,7 +176,7 @@ const CheckInDashboard = ({
             </div>
 
             {/* Log */}
-            <ActionLog logs={logs} />
+            <ActionLog logs={mergedLogs} />
 
             {/* Scanner & Result Layers */}
             <Scanner
